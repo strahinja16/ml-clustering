@@ -2,7 +2,7 @@ import pandas as pd
 from datetime import datetime
 
 FILE_PATH = './2019-Oct.csv'
-PROCESSED_FILE_NAME = './processed_data.csv'
+PROCESSED_FILE_NAME = './processed_data1.csv'
 DATE_FORMAT = '%Y-%m-%d %H:%M:%S UTC'
 
 TYPE_MAP = {
@@ -59,9 +59,15 @@ new_data_columns = [
     'user_id',
     'user_session',
 ]
-new_data = pd.DataFrame(new_data_columns)
+
+BATCH_SIZE = 10000
+counter = 0
+cnt_2 = 1
+record_count = data.shape[0]
+new_data = []
 
 for index, row in data.iterrows():
+    counter = counter + 1
     obj = {
         'event_time': get_hour_from_date(row["event_time"]),
         'event_type': get_event_type(row["event_type"]),
@@ -70,20 +76,17 @@ for index, row in data.iterrows():
         'brand': get_brand(row["brand"]),
         'price': row["price"],
         'user_id': row["user_id"],
-        'user_session': row["user_session"],
+        'user_session': get_session_id(row["user_session"]),
     }
-    new_data.append(obj, ignore_index=True)
+    new_data.append(obj)
+    if counter == BATCH_SIZE:
+        print('Status ', ((cnt_2 * BATCH_SIZE)/record_count * 100), ' %')
+        cnt_2 = cnt_2 + 1
+        counter = 0
+        df2 = pd.DataFrame(new_data)
+        new_data = []
+        df2.to_csv(PROCESSED_FILE_NAME, mode='a')
 
-new_data.to_csv(PROCESSED_FILE_NAME)
+new_data = pd.DataFrame(new_data)
+new_data.to_csv(PROCESSED_FILE_NAME, mode='a')
 
-
-
-
-    # event_time = get_hour_from_date(row["event_time"])
-    # event_type = get_event_type(row["event_type"])
-    # product_id = row["product_id"]
-    # category_id = row["category_id"]
-    # brand = get_brand(rwo["brand"])
-    # price = row["price"]
-    # user_id = row["user_id"]
-    # user_session = row["user_session"]
