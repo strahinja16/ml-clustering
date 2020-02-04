@@ -1,7 +1,9 @@
 import pandas as pd
 from datetime import datetime
+import os.path
+from os import path, remove
 
-FILE_PATH = './2019-Oct.csv'
+FILE_PATH = './2019-Nov.csv'
 PROCESSED_FILE_NAME = './processed_data1.csv'
 DATE_FORMAT = '%Y-%m-%d %H:%M:%S UTC'
 
@@ -66,6 +68,10 @@ cnt_2 = 1
 record_count = data.shape[0]
 new_data = []
 
+if path.exists(PROCESSED_FILE_NAME):
+    remove(PROCESSED_FILE_NAME)
+
+
 for index, row in data.iterrows():
     counter = counter + 1
     obj = {
@@ -80,13 +86,13 @@ for index, row in data.iterrows():
     }
     new_data.append(obj)
     if counter == BATCH_SIZE:
-        print('Status ', ((cnt_2 * BATCH_SIZE)/record_count * 100), ' %')
+        print('Status ', (round((cnt_2 * BATCH_SIZE)/record_count * 100),2), ' %')
         cnt_2 = cnt_2 + 1
         counter = 0
         df2 = pd.DataFrame(new_data)
         new_data = []
-        df2.to_csv(PROCESSED_FILE_NAME, mode='a')
+        df2.to_csv(PROCESSED_FILE_NAME, mode='a', header=False)
 
 new_data = pd.DataFrame(new_data)
-new_data.to_csv(PROCESSED_FILE_NAME, mode='a')
+new_data.to_csv(PROCESSED_FILE_NAME, mode='a',header=False)
 
