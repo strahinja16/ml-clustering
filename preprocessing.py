@@ -18,12 +18,18 @@ BRAND_COUNTER = 0
 BRAND_MAP = {}
 SESSION_COUNTER = 0
 SESSION_MAP =  {}
+PRODUCT_COUNTER = 0
+PRODUCT_MAP = {}
+USER_COUNTER = 0
+USER_MAP = {}
+CATEGORY_COUNTER = 0
+CATEGORY_MAP = {}
 
 data = pd.read_csv(FILE_PATH)
 
-def get_hour_from_date(value: str):
+def get_date_time(value: str):
     date = datetime.strptime(value, DATE_FORMAT)
-    return date.hour
+    return date.day, date.weekday(), date.hour
 
 
 def get_event_type(value: str):
@@ -51,8 +57,37 @@ def get_session_id(value: str):
         SESSION_COUNTER += 1
         return SESSION_MAP[value]
 
+def get_user_id(value: str):
+    global USER_COUNTER
+    if value in USER_MAP.keys():
+        return USER_MAP[value]
+    else:
+        USER_MAP[value] = USER_COUNTER
+        USER_COUNTER += 1
+        return USER_MAP[value]
+
+def get_category_id(value: str):
+    global CATEGORY_COUNTER
+    if value in CATEGORY_MAP.keys():
+        return CATEGORY_MAP[value]
+    else:
+        CATEGORY_MAP[value] = CATEGORY_COUNTER
+        CATEGORY_COUNTER += 1
+        return CATEGORY_MAP[value]
+
+def get_product_id(value: str):
+    global PRODUCT_COUNTER
+    if value in PRODUCT_MAP.keys():
+        return PRODUCT_MAP[value]
+    else:
+        PRODUCT_MAP[value] = PRODUCT_COUNTER
+        PRODUCT_COUNTER += 1
+        return PRODUCT_MAP[value]
+
 new_data_columns = [
-    'event_time',
+    'day',
+    'weekday',
+    'hour',
     'event_type',
     'product_id',
     'category_id',
@@ -62,6 +97,8 @@ new_data_columns = [
     'user_session',
 ]
 
+# thresh=7
+data = data.dropna(subset=["brand"])
 BATCH_SIZE = 10000
 counter = 0
 cnt_2 = 1
@@ -71,17 +108,22 @@ new_data = []
 if path.exists(PROCESSED_FILE_NAME):
     remove(PROCESSED_FILE_NAME)
 
+df_columns = pd.DataFrame(columns=new_data_columns)
+df_columns.to_csv(PROCESSED_FILE_NAME, mode='a', header=True, index=False)
 
 for index, row in data.iterrows():
     counter = counter + 1
+    day, weekday, hour = get_date_time(row["event_time"])
     obj = {
-        'event_time': get_hour_from_date(row["event_time"]),
+        'day': day,
+        'weekday': weekday,
+        'hour': hour,
         'event_type': get_event_type(row["event_type"]),
-        'product_id': row["product_id"],
-        'category_id': row["category_id"],
+        'product_id': get_product_id(row["product_id"]),
+        'category_id': get_category_id(row["category_id"]),
         'brand': get_brand(row["brand"]),
         'price': row["price"],
-        'user_id': row["user_id"],
+        'user_id': get_user_id(row["user_id"]),
         'user_session': get_session_id(row["user_session"]),
     }
     new_data.append(obj)
@@ -91,8 +133,8 @@ for index, row in data.iterrows():
         counter = 0
         df2 = pd.DataFrame(new_data)
         new_data = []
-        df2.to_csv(PROCESSED_FILE_NAME, mode='a', header=False)
+        df2.to_csv(PROCESSED_FILE_NAME, mode='a', header=False, index=False)
 
 new_data = pd.DataFrame(new_data)
-new_data.to_csv(PROCESSED_FILE_NAME, mode='a',header=False)
+new_data.to_csv(PROCESSED_FILE_NAME, mode='a',header=False, index=False)
 
