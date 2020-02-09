@@ -2,6 +2,7 @@ import pandas as pd
 from datetime import datetime
 import os.path
 from os import path, remove
+import json
 
 FILE_PATH = './2019-Nov.csv'
 PROCESSED_FILE_NAME = './processed_data1.csv'
@@ -128,13 +129,30 @@ for index, row in data.iterrows():
     }
     new_data.append(obj)
     if counter == BATCH_SIZE:
-        print('Status ', (round((cnt_2 * BATCH_SIZE)/record_count * 100),2), ' %')
+        print('Status ', (round((cnt_2 * BATCH_SIZE)/record_count * 100,2)), ' %')
         cnt_2 = cnt_2 + 1
         counter = 0
         df2 = pd.DataFrame(new_data)
         new_data = []
         df2.to_csv(PROCESSED_FILE_NAME, mode='a', header=False, index=False)
 
-new_data = pd.DataFrame(new_data)
-new_data.to_csv(PROCESSED_FILE_NAME, mode='a',header=False, index=False)
+JSON_FILE  = './dictionaries.json'
 
+if path.exists(JSON_FILE):
+    remove(JSON_FILE)
+
+dict_for_json = {
+    'brand_count' : BRAND_COUNTER,
+    'brand_map': BRAND_MAP,
+    'session_count': SESSION_COUNTER,
+    'session_map': SESSION_MAP,
+    'product_count': PRODUCT_COUNTER,
+    'product_map': PRODUCT_MAP,
+    'user_count': USER_COUNTER,
+    'user_map': USER_MAP,
+    'category_count': CATEGORY_COUNTER,
+    'category_map': CATEGORY_MAP,
+}
+
+with open(JSON_FILE, 'w') as f_desc:
+    json.dump(dict_for_json, f_desc, indent=4)
