@@ -7,13 +7,13 @@ POST_PROCESSED_FILE_NAME = './post_processed_data.csv'
 JSON_FILE_NAME = './dictionaries.json'
 
 TYPE_MAP = {
-    'view': 0,
-    'cart': 1,
-    'purchase': 2,
-    'remove_from_cart': 3
+    0 : 'view',
+    1 : 'cart',
+    2 : 'purchase',
+    3 : 'remove_from_cart'
 }
 
-processed_data = pd.read_csv(PROCESSED_FILE_NAME).head(n=10)
+processed_data = pd.read_csv(PROCESSED_FILE_NAME)
 data_columns = [
     # 'event_time',
     'event_type',
@@ -26,12 +26,8 @@ data_columns = [
     'cluster'
 ]
 
-def get_key(val, my_dict): 
-    for key, value in my_dict.items(): 
-         if val == value: 
-             return key 
-  
-    return "key doesn't exist"
+def get_key(val, my_dict):
+    return my_dict[int(val)]
 
 if path.exists(POST_PROCESSED_FILE_NAME):
     remove(POST_PROCESSED_FILE_NAME)
@@ -39,10 +35,16 @@ if path.exists(POST_PROCESSED_FILE_NAME):
 with open(JSON_FILE_NAME, 'r') as fp:
     dictionaries = json.load(fp)
 
+new_dict = {}
+
+for k, d in dictionaries.items():
+    if type(d) is dict:    
+        new_dict[k] = dict((v, k) for k, v in d.items())
+
 df_columns = pd.DataFrame(columns=data_columns)
 df_columns.to_csv(POST_PROCESSED_FILE_NAME, mode='a', header=True, index=False)
 
-BATCH_SIZE = 5
+BATCH_SIZE = 100
 counter = 0
 cnt_2 = 1
 record_count = processed_data.shape[0]
@@ -55,14 +57,14 @@ for index, row in processed_data.iterrows():
     counter = counter + 1
     obj = {
         'event_time': get_event_time(row["day"], row["hour"]),
-        'event_type': get_key(row["event_type"], TYPE_MAP),
-        'product_id': get_key(row["product_id"], dictionaries["product_map"]),
-        'category_id': get_key(row["category_id"], dictionaries["category_map"]),
-        'category_code': get_key(row["category_id"], dictionaries["category_map"]),
-        'brand': get_key(row["brand"], dictionaries["brand_map"]),
+        'event_type': TYPE_MAP[row["event_type"]],
+        'product_id': get_key(row["product_id"], new_dict["product_map"]),
+        'category_id': get_key(row["category_id"], new_dict["category_map"]),
+        'category_code': get_key(row["category_id"], new_dict["category_map"]),
+        'brand': get_key(row["brand"], new_dict["brand_map"]),
         'price': row["price"],
-        'user_id': get_key(row["user_id"], dictionaries["user_map"]),
-        'user_session': get_key(row["user_session"],dictionaries["session_map"]),
+        'user_id': get_key(row["user_id"], new_dict["user_map"]),
+        'user_session': get_key(row["user_session"],new_dict["session_map"]),
         "cluster": int(row["cluster"])
     }
 
