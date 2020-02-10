@@ -1,6 +1,5 @@
 import pandas as pd
 from datetime import datetime
-import os.path
 from os import path, remove
 import json
 
