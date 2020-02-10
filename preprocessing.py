@@ -97,7 +97,6 @@ new_data_columns = [
     'user_session',
 ]
 
-# thresh=7
 data = data.dropna(subset=["brand"])
 BATCH_SIZE = 10000
 counter = 0
